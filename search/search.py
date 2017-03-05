@@ -86,42 +86,31 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    from game import Directions
-    n = Directions.NORTH
-    e = Directions.EAST
-    s = Directions.SOUTH
-    w = Directions.WEST
+    position = (problem.getStartState(), [], 0)
+    visited = []
+    fringe = util.Stack()
+    fringe.push(position)
 
-    position = problem.getStartState()
-    path = util.Stack()
-    visited = set()
-    foundUnvisited = False
+    while not fringe.isEmpty():
+        position = fringe.pop()
 
-    print problem.getStartState()
+        if position[0] not in visited:
+            visited.append(position[0])
 
-    while problem.isGoalState(position) == False:
-        visited.add(position)
-        successors = problem.getSuccessors(position)
-
-        for successor in successors:
-            if successor[0] not in visited:
-                foundUnvisited = True
-                path.push(successor[1][:1].lower())
-                visited.add(successor[0])
-                position = successor[0]
-
+            if problem.isGoalState(position[0]):
+                pathToReturn = position[1]
                 break
 
-        if foundVisited == False:
-            
-        foundUnvisited = False
+            for successor in problem.getSuccessors(position[0]):
+                pathToReturn = position[1] + [successor[1]]
+                path = (successor[0], pathToReturn)
+                fringe.push(path)
 
-    return path
+    return pathToReturn
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
@@ -139,7 +128,6 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
-
 
 # Abbreviations
 bfs = breadthFirstSearch
