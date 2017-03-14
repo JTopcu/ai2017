@@ -86,9 +86,10 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    position = (problem.getStartState(), [], 0)
+    position = (problem.getStartState(), [])
     visited = []
     fringe = util.Stack()
+
     fringe.push(position)
 
     while not fringe.isEmpty():
@@ -103,19 +104,62 @@ def depthFirstSearch(problem):
 
             for successor in problem.getSuccessors(position[0]):
                 pathToReturn = position[1] + [successor[1]]
-                path = (successor[0], pathToReturn)
-                fringe.push(path)
+                node = (successor[0], pathToReturn)
+                fringe.push(node)
 
     return pathToReturn
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
+    position = (problem.getStartState(), [])
+    visited = []
+    fringe = util.Queue()
+
+    fringe.push(position)
+
+    while not fringe.isEmpty():
+        position = fringe.pop()
+
+        if position[0] not in visited:
+            visited.append(position[0])
+
+            if problem.isGoalState(position[0]):
+                pathToReturn = position[1]
+                break
+
+            for successor in problem.getSuccessors(position[0]):
+                pathToReturn = position[1] + [successor[1]]
+                node = (successor[0], pathToReturn)
+                fringe.push(node)
+
+    return pathToReturn
     
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    position = (problem.getStartState(), [], 0)
+    visited = []
+    fringe = util.PriorityQueue()
+
+    fringe.push(position, 0)
+
+    while not fringe.isEmpty():
+        position = fringe.pop()
+
+        if position[0] not in visited:
+            visited.append(position[0])
+
+            if problem.isGoalState(position[0]):
+                pathToReturn = position[1]
+                break
+
+            for successor in problem.getSuccessors(position[0]):
+                pathToReturn = position[1] + [successor[1]]
+                totalPathCost = position[2] + successor[2]
+                node = (successor[0], pathToReturn, totalPathCost)
+                fringe.push(node, totalPathCost)
+
+    return pathToReturn
 
 def nullHeuristic(state, problem=None):
     """
@@ -126,8 +170,30 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    position = (problem.getStartState(), [], 0)
+    visited = []
+    fringe = util.PriorityQueue()
+
+    fringe.push(position, 0)
+
+    while not fringe.isEmpty():
+        position = fringe.pop()
+
+        if position[0] not in visited:
+            visited.append(position[0])
+
+            if problem.isGoalState(position[0]):
+                pathToReturn = position[1]
+                break
+
+            for successor in problem.getSuccessors(position[0]):
+                pathToReturn = position[1] + [successor[1]]
+                totalPathCost = position[2] + successor[2]
+                heuristicCost = totalPathCost + heuristic(successor[0], problem)
+                node = (successor[0], pathToReturn, totalPathCost)
+                fringe.update(node, heuristicCost)
+
+    return pathToReturn
 
 # Abbreviations
 bfs = breadthFirstSearch
