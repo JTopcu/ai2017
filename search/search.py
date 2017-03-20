@@ -87,20 +87,20 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     position = (problem.getStartState(), [])
-    visited = []
     fringe = util.Stack()
+    visited = []
 
     fringe.push(position)
 
     while not fringe.isEmpty():
         position = fringe.pop()
 
+        if problem.isGoalState(position[0]):
+            pathToReturn = position[1]
+            break
+
         if position[0] not in visited:
             visited.append(position[0])
-
-            if problem.isGoalState(position[0]):
-                pathToReturn = position[1]
-                break
 
             for successor in problem.getSuccessors(position[0]):
                 pathToReturn = position[1] + [successor[1]]
@@ -112,22 +112,22 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     position = (problem.getStartState(), [])
-    visited = []
     fringe = util.Queue()
+    visited = []
+    visited.append(problem.getStartState())
 
     fringe.push(position)
 
     while not fringe.isEmpty():
         position = fringe.pop()
 
-        if position[0] not in visited:
-            visited.append(position[0])
+        if problem.isGoalState(position[0]):
+            pathToReturn = position[1]
+            break
 
-            if problem.isGoalState(position[0]):
-                pathToReturn = position[1]
-                break
-
-            for successor in problem.getSuccessors(position[0]):
+        for successor in problem.getSuccessors(position[0]):
+            if successor[0] not in visited:
+                visited.append(successor[0])
                 pathToReturn = position[1] + [successor[1]]
                 node = (successor[0], pathToReturn)
                 fringe.push(node)
