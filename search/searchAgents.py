@@ -303,14 +303,10 @@ class CornersProblem(search.SearchProblem):
         position = state[0]
         visitedCorners = state[1]
 
-        if position in self.corners:
-            if not position in visitedCorners:
-                visitedCorners.append(position)
-
-            if set(self.corners).issubset(set(visitedCorners)):
-                return True
-        else:
-            return False
+        if set(self.corners).issubset(set(visitedCorners)):
+            return True
+            
+        return False
 
     def getSuccessors(self, state):
         """
@@ -324,12 +320,6 @@ class CornersProblem(search.SearchProblem):
         """
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
             x,y = state[0]
             visitedCorners = state[1]
             dx, dy = Actions.directionToVector(action)
@@ -337,14 +327,14 @@ class CornersProblem(search.SearchProblem):
             hitsWall = self.walls[nextx][nexty]
             
             if not hitsWall:
+                nextPosition = (nextx, nexty)
                 successorVisitedCorners = list(visitedCorners)
-                nextState = (nextx, nexty)
 
-                if nextState in self.corners:
-                    if nextState not in successorVisitedCorners:
-                        successorVisitedCorners.append(nextState)
+                if nextPosition in self.corners and nextPosition not in visitedCorners:
+                    successorVisitedCorners.append(nextPosition)
 
-                successors.append(((nextState, successorVisitedCorners), action, 1))
+                successor = ((nextPosition, successorVisitedCorners), action, 1)
+                successors.append(successor)
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -379,8 +369,35 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    cornersLeft = [x for x in corners if x not in state[1]]
+    totalDistance = 0
+    position = state[0]
+    distanceToCorners = []
+
+    while cornersLeft:
+        distanceToCorners = []
+        minimum = 99999
+        for i in range(len(cornersLeft)):
+            distanceToCorners.append(util.manhattanDistance(position, cornersLeft[i]))
+
+            if util.manhattanDistance(position, cornersLeft[i]) < minimum:
+                minimum = util.manhattanDistance(position, cornersLeft[i])
+                minimumPosition = cornersLeft[i]
+
+        totalDistance += min(distanceToCorners)
+        position = minimumPosition
+        cornersLeft.remove(minimumPosition)
+
+    return totalDistance
+
+    while unvisited:
+        distance, corner = min([(util.manhattanDistance(node, corner), corner) \
+                                for corner in unvisited])
+        heuristic += distance
+        node = corner
+        unvisited.remove(corner)
+    
+    return heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -473,7 +490,7 @@ def foodHeuristic(state, problem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
+    
     return 0
 
 class ClosestDotSearchAgent(SearchAgent):
