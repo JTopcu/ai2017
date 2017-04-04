@@ -1,0 +1,3 @@
+For question 7, I used the function mazeDistance as Sebastion said it was okay to use as it is just a tool that's available.
+I have commented out my implementation without using mazeDistance to show that I can complete the question without mazeDistance
+in case any issues arise.
