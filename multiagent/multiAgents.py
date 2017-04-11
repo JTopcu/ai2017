@@ -151,7 +151,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             if gameState.isWin() or gameState.isLose() or depth == 0:
                 return self.evaluationFunction(gameState)
 
-            if agent == 0:
+            if agent == PACMAN:
                 bestVal = -(float("inf"))
                 legalMoves = gameState.getLegalActions(agent)
 
@@ -196,8 +196,53 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        PACMAN = 0
+
+        def alphabeta(gameState, depth, alpha, beta, agent):
+            if gameState.isWin() or gameState.isLose() or depth == 0:
+                return self.evaluationFunction(gameState)
+
+            if agent == PACMAN:
+                val = -(float("inf"))
+                legalMoves = gameState.getLegalActions(agent)
+
+                for action in legalMoves:
+                    val = max(val, alphabeta(gameState.generateSuccessor(agent, action), depth, alpha, beta, agent + 1))
+                    if val > beta:
+                        break
+                    alpha = max(alpha, val)
+
+                return val
+            else:
+                val = float("inf")
+                legalMoves = gameState.getLegalActions(agent)
+
+                if agent < gameState.getNumAgents() - 1:
+                    for action in legalMoves:
+                        val = min(val, alphabeta(gameState.generateSuccessor(agent, action), depth, alpha, beta, agent + 1))
+                        if val < alpha:
+                            break
+                        beta = min(beta, val)
+                else:
+                    for action in legalMoves:
+                        val = min(val, alphabeta(gameState.generateSuccessor(agent, action), depth - 1, alpha, beta, PACMAN))
+                        if val < alpha:
+                            break
+                        beta = min(beta, val)
+
+                return val
+
+        legalMoves = gameState.getLegalActions(PACMAN)
+        val = -(float("inf"))
+        bestAction = ""
+
+        for action in legalMoves:
+            lastVal = val
+            val = max(val, alphabeta(gameState.generateSuccessor(0, action), self.depth, val, abs(val), 1))
+            if val > lastVal:
+                bestAction = action
+
+        return bestAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
