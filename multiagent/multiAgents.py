@@ -77,19 +77,19 @@ class ReflexAgent(Agent):
         score = 0.0
 
         # If the move results in being adjacent to a ghost, don't move there
-        for ghost in newGhostStates:
-            if util.manhattanDistance(newPos, successorGameState.getGhostPosition(1)) <= 1:
+        for agent in range(successorGameState.getNumAgents()):
+            if agent > 0 and util.manhattanDistance(newPos, successorGameState.getGhostPosition(agent)) <= 1:
                 return 0
 
         # Find the reciprical of all food, add the largest number (closest food) to the score
         for food in newFood.asList():
-            foodDistance = float(1.0 / util.manhattanDistance(newPos, food))
+            foodDistance = 1.0 / util.manhattanDistance(newPos, food)
             if foodDistance > score:
                 score = foodDistance
 
         # If the new state is on food, add 1 to the score
         if currentGameState.getFood()[newPos[0]][newPos[1]]:
-            score += 1
+            score += 1.0
 
         return score
 
@@ -145,12 +145,16 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
+        # Constant to identify the pacman agent
         PACMAN = 0
 
+        # Recursive function used to navigate tree
         def minimax(gameState, depth, agent):
+            # Return the value of the evaluation function if the state is a terminal state
             if gameState.isWin() or gameState.isLose() or depth == 0:
                 return self.evaluationFunction(gameState)
 
+            # If the agent is pacman, return the max value of all possible moves
             if agent == PACMAN:
                 bestVal = -(float("inf"))
                 legalMoves = gameState.getLegalActions(agent)
@@ -160,14 +164,18 @@ class MinimaxAgent(MultiAgentSearchAgent):
                     bestVal = max(bestVal, val)
 
                 return bestVal
+            # If the agent is a ghost, return the min value of all possible moves
             else:
                 bestVal = float("inf")
                 legalMoves = gameState.getLegalActions(agent)
 
+                # If the agent isn't the last ghost, find the min and call the function on the next agent
                 if agent < gameState.getNumAgents() - 1:
                     for action in legalMoves:
                         val = minimax(gameState.generateSuccessor(agent, action), depth, agent + 1)
                         bestVal = min(bestVal, val)
+                # Once we reach the last agent (the last ghost), call the function on pacman and decrement
+                # the depth as we have cycled through every agent
                 else:
                     for action in legalMoves:
                         val = minimax(gameState.generateSuccessor(agent, action), depth - 1, PACMAN)
@@ -175,17 +183,20 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
                 return bestVal
 
+        # Set required variables to use in recursive minimax function
         legalMoves = gameState.getLegalActions(PACMAN)
         bestVal = -(float("inf"))
-        bestAction = ""
+        actionToReturn = ""
 
+        # Iterate through all of pacman's initial legal moves, set actionToReturn to the action corresponding
+        # with the highest value of the minimax function and return it
         for action in legalMoves:
             lastVal = bestVal
             bestVal = max(bestVal, minimax(gameState.generateSuccessor(0, action), self.depth, 1))
             if bestVal > lastVal:
-                bestAction = action
+                actionToReturn = action
 
-        return bestAction
+        return actionToReturn
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -196,53 +207,73 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
+        # Constant to identify the pacman agent
         PACMAN = 0
 
+        # Recursive function used to navigate tree
         def alphabeta(gameState, depth, alpha, beta, agent):
+            # Return the value of the evaluation function if the state is a terminal state
             if gameState.isWin() or gameState.isLose() or depth == 0:
                 return self.evaluationFunction(gameState)
 
+            # If the agent is pacman, look for the max of all legal moves
             if agent == PACMAN:
                 val = -(float("inf"))
                 legalMoves = gameState.getLegalActions(agent)
 
                 for action in legalMoves:
                     val = max(val, alphabeta(gameState.generateSuccessor(agent, action), depth, alpha, beta, agent + 1))
+                    # If the max value so far is greater than beta, there is no need to check any more states as the
+                    # min agent (ghosts) will pick the beta value regardless
                     if val > beta:
                         break
+                    # Set alpha to the new highest value if it's higher than the current value
                     alpha = max(alpha, val)
 
                 return val
+            # If the agent is a gohst, look for the min of all legal moves
             else:
                 val = float("inf")
                 legalMoves = gameState.getLegalActions(agent)
 
+                # Cycle through the ghosts and decrement the depth once we reach the final ghost
                 if agent < gameState.getNumAgents() - 1:
                     for action in legalMoves:
                         val = min(val, alphabeta(gameState.generateSuccessor(agent, action), depth, alpha, beta, agent + 1))
+                        # If the min value so far is less than alpha, there is no need to check any more states as the
+                        # max agent (pacman) will pick the alpha value regardless
                         if val < alpha:
                             break
                         beta = min(beta, val)
                 else:
                     for action in legalMoves:
                         val = min(val, alphabeta(gameState.generateSuccessor(agent, action), depth - 1, alpha, beta, PACMAN))
+                        # If the min value so far is less than alpha, there is no need to check any more states as the
+                        # max agent (pacman) will pick the alpha value regardless
                         if val < alpha:
                             break
                         beta = min(beta, val)
 
                 return val
 
+        # Set required variables to use in recursive alphabeta function
         legalMoves = gameState.getLegalActions(PACMAN)
-        val = -(float("inf"))
-        bestAction = ""
+        alpha = -(float("inf"))
+        beta = float("inf")
+        actionToReturn = ""
+        val = alpha
 
+        # Iterate through all of pacman's initial legal moves, set actionToReturn to the action corresponding
+        # with the highest value of the alphabeta function and return it
         for action in legalMoves:
             lastVal = val
-            val = max(val, alphabeta(gameState.generateSuccessor(0, action), self.depth, val, abs(val), 1))
+            val = max(val, alphabeta(gameState.generateSuccessor(0, action), self.depth, alpha, beta, 1))
             if val > lastVal:
-                bestAction = action
+                actionToReturn = action
 
-        return bestAction
+            alpha = max(alpha, val)
+
+        return actionToReturn
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -256,18 +287,99 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Constant to identify the pacman agent
+        PACMAN = 0
+
+        # Recursive function used to navigate tree
+        def expectimax(gameState, depth, agent):
+            # Return the value of the evaluation function if the state is a terminal state
+            if gameState.isWin() or gameState.isLose() or depth == 0:
+                return self.evaluationFunction(gameState)
+
+            # If the agent is pacman, return the highest value of the expectimax function in the same
+            # manner as the minimax function
+            if agent == PACMAN:
+                bestVal = -(float("inf"))
+                legalMoves = gameState.getLegalActions(agent)
+
+                for action in legalMoves:
+                    val = expectimax(gameState.generateSuccessor(agent, action), depth, agent + 1)
+                    bestVal = max(bestVal, val)
+
+                return bestVal
+            # If the agent is a ghost, return the average of all the values of the expectimax function
+            # calls, which is one for every legal move
+            else:
+                val = 0
+                legalMoves = gameState.getLegalActions(agent)
+
+                if agent < gameState.getNumAgents() - 1:
+                    for action in legalMoves:
+                        val += expectimax(gameState.generateSuccessor(agent, action), depth, agent + 1)
+                else:
+                    for action in legalMoves:
+                        val += expectimax(gameState.generateSuccessor(agent, action), depth - 1, PACMAN)
+
+                return val / len(legalMoves)
+
+        # Set required variables to use in recursive alphabeta function
+        legalMoves = gameState.getLegalActions(PACMAN)
+        bestVal = -(float("inf"))
+        actionToReturn = ""
+
+        # Iterate through all of pacman's initial legal moves, set actionToReturn to the action corresponding
+        # with the highest value of the expectimax function and return it
+        for action in legalMoves:
+            lastVal = bestVal
+            bestVal = max(bestVal, expectimax(gameState.generateSuccessor(0, action), self.depth, 1))
+            if bestVal > lastVal:
+                actionToReturn = action
+
+        return actionToReturn
 
 def betterEvaluationFunction(currentGameState):
     """
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
       evaluation function (question 5).
 
-      DESCRIPTION: <write something here so we know what you did>
+      DESCRIPTION: This function will take the current score of the game to use
+      as the base score for pacman. There are two features that will affect the
+      final score of the evaluation function:
+
+      1. It will calculate the sum of the reciprical of the manhattan distance
+      from pacman to each ghost and subtract them from the score. The closer the ghosts
+      are to pacman, the bigger the subtraction will be.
+
+      2. It will find the closest food, take the reciprical and add it to the current
+      score. The closer the food the bigger the score will be.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Pacman's current position
+    pos = currentGameState.getPacmanPosition()
+
+    # The score we're going to return
+    score = currentGameState.getScore()
+
+    # Find the sum of the reciprical of all ghost distances to pacman
+    ghostDistances = 0.0
+    for agent in range(currentGameState.getNumAgents() - 1):
+        if agent > 0:
+            ghostDistance = 1.0 / util.manhattanDistance(pos, currentGameState.getGhostPosition(agent))
+            ghostDistances += ghostDistance
+
+    # Subtract the distances from the current score
+    score -= ghostDistances
+
+
+    # Find the reciprical of all food, add the largest number (closest food) to the score
+    closestFood = 0.0
+    for food in currentGameState.getFood().asList():
+        foodDistance = 1.0 / util.manhattanDistance(pos, food)
+        if foodDistance > closestFood:
+            closestFood = foodDistance
+
+    score += closestFood
+
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
